@@ -54,6 +54,8 @@ typedef struct {
   gchar *time_font;
   gchar *date_format;
   gchar *time_format;
+  gchar *date_color;
+  gchar *time_color;
   t_layout layout;
 
   /* option widgets */
@@ -91,6 +93,11 @@ void
 datetime_apply_format(t_datetime *datetime,
     const gchar *date_format,
     const gchar *time_format);
+
+void
+datetime_apply_color(t_datetime *datetime,
+    const gchar *date_color,
+    const gchar *time_color);
 
 void
 datetime_apply_layout(t_datetime *datetime,

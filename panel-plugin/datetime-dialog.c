@@ -275,6 +275,30 @@ time_format_changed(GtkComboBox *cbox, t_datetime *dt)
 }
 
 /*
+ * Read color from color button and set foreground color
+ */
+static void
+date_color_changed(GtkWidget *widget, t_datetime *dt)
+{
+  GdkColor color;
+  gtk_color_button_get_color((GtkColorButton *)widget, &color);
+
+  datetime_apply_color(dt, gdk_color_to_string(&color), NULL);
+}
+
+/*
+ * Read color from color button and set background color
+ */
+static void
+time_color_changed(GtkWidget *widget, t_datetime *dt)
+{
+  GdkColor color;
+  gtk_color_button_get_color((GtkColorButton *)widget, &color);
+
+  datetime_apply_color(dt, NULL, gdk_color_to_string(&color));
+}
+
+/*
  * read values from date and time entry and inform datetime about it
  */
 static gboolean
@@ -442,6 +466,22 @@ datetime_properties_dialog(XfcePanelPlugin *plugin, t_datetime * datetime)
   hbox = gtk_hbox_new(FALSE, 2);
   gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
 
+  /* color label */
+  label = gtk_label_new(_("Color:"));
+  gtk_misc_set_alignment(GTK_MISC (label), 0, 0.5);
+  gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 0);
+  gtk_size_group_add_widget(sg, label);
+
+  /* color button */
+  button = gtk_color_button_new();
+  gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 0);
+  g_signal_connect(G_OBJECT(button), "color-set",
+      G_CALLBACK(date_color_changed), datetime);
+
+  /* hbox */
+  hbox = gtk_hbox_new(FALSE, 2);
+  gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
+
   /* format label */
   label = gtk_label_new(_("Format:"));
   gtk_misc_set_alignment(GTK_MISC (label), 0, 0.5);
@@ -538,6 +578,22 @@ datetime_properties_dialog(XfcePanelPlugin *plugin, t_datetime * datetime)
   g_signal_connect(G_OBJECT(button), "clicked",
       G_CALLBACK(datetime_font_selection_cb), datetime);
   datetime->time_font_selector = button;
+
+  /* hbox */
+  hbox = gtk_hbox_new(FALSE, 2);
+  gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
+
+  /* color label */
+  label = gtk_label_new(_("Color:"));
+  gtk_misc_set_alignment(GTK_MISC (label), 0, 0.5);
+  gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 0);
+  gtk_size_group_add_widget(sg, label);
+
+  /* color button */
+  button = gtk_color_button_new();
+  gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 0);
+  g_signal_connect(G_OBJECT(button), "color-set",
+      G_CALLBACK(time_color_changed), datetime);
 
   /* hbox */
   hbox = gtk_hbox_new(FALSE, 2);

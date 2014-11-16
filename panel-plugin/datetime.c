@@ -503,6 +503,34 @@ void datetime_apply_format(t_datetime *datetime,
 }
 
 /*
+ * set the date and time foreground color
+ */
+void datetime_apply_color(t_datetime *datetime,
+    const gchar *date_color,
+    const gchar *time_color)
+{
+  GdkColor color;
+
+  if (date_color != NULL)
+  {
+    g_free(datetime->date_color);
+    datetime->date_color = g_strdup(date_color);
+
+    gdk_color_parse (datetime->date_color, &color);
+    gtk_widget_modify_fg (datetime->date_label, GTK_STATE_NORMAL, &color);
+  }
+
+  if (time_color != NULL)
+  {
+    g_free(datetime->time_color);
+    datetime->time_color = g_strdup(time_color);
+
+    gdk_color_parse (datetime->time_color, &color);
+    gtk_widget_modify_fg (datetime->time_label, GTK_STATE_NORMAL, &color);
+  }
+}
+
+/*
  * Function only called by the signal handler.
  */
 static int datetime_set_size(XfcePanelPlugin *plugin,
@@ -521,7 +549,7 @@ static void datetime_read_rc_file(XfcePanelPlugin *plugin, t_datetime *dt)
   gchar *file;
   XfceRc *rc = NULL;
   t_layout layout;
-  const gchar *date_font, *time_font, *date_format, *time_format;
+  const gchar *date_font, *time_font, *date_format, *time_format, *date_color, *time_color;
 
   /* load defaults */
   layout = LAYOUT_DATE_TIME;
@@ -529,6 +557,8 @@ static void datetime_read_rc_file(XfcePanelPlugin *plugin, t_datetime *dt)
   time_font = "Bitstream Vera Sans 8";
   date_format = "%Y-%m-%d";
   time_format = "%H:%M";
+  date_color = "#000000000000";
+  time_color = "#000000000000";
 
   /* open file */
   if((file = xfce_panel_plugin_lookup_rc_file(plugin)) != NULL)
@@ -543,6 +573,8 @@ static void datetime_read_rc_file(XfcePanelPlugin *plugin, t_datetime *dt)
       time_font   = xfce_rc_read_entry(rc, "time_font", time_font);
       date_format = xfce_rc_read_entry(rc, "date_format", date_format);
       time_format = xfce_rc_read_entry(rc, "time_format", time_format);
+      date_color = xfce_rc_read_entry(rc, "date_color", date_color);
+      time_color = xfce_rc_read_entry(rc, "time_color", time_color);
     }
   }
 
@@ -550,6 +582,8 @@ static void datetime_read_rc_file(XfcePanelPlugin *plugin, t_datetime *dt)
   time_font   = g_strdup(time_font);
   date_format = g_strdup(date_format);
   time_format = g_strdup(time_format);
+  date_color = g_strdup(date_color);
+  time_color = g_strdup(time_color);
 
   if(rc != NULL)
     xfce_rc_close(rc);
@@ -558,6 +592,7 @@ static void datetime_read_rc_file(XfcePanelPlugin *plugin, t_datetime *dt)
   datetime_apply_layout(dt, layout);
   datetime_apply_font(dt, date_font, time_font);
   datetime_apply_format(dt, date_format, time_format);
+  datetime_apply_color(dt, date_color, time_color);
 }
 
 /*
@@ -581,6 +616,8 @@ void datetime_write_rc_file(XfcePanelPlugin *plugin, t_datetime *dt)
     xfce_rc_write_entry(rc, "time_font", dt->time_font);
     xfce_rc_write_entry(rc, "date_format", dt->date_format);
     xfce_rc_write_entry(rc, "time_format", dt->time_format);
+    xfce_rc_write_entry(rc, "date_color", dt->date_color);
+    xfce_rc_write_entry(rc, "time_color", dt->time_color);
 
     xfce_rc_close(rc);
   }
