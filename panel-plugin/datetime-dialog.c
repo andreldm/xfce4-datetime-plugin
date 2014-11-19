@@ -368,6 +368,7 @@ datetime_properties_dialog(XfcePanelPlugin *plugin, t_datetime * datetime)
             *bin;
   GtkSizeGroup  *sg;
   gint i_custom; /* index of custom menu item */
+  GdkColor color;
 
   xfce_textdomain (GETTEXT_PACKAGE, LOCALEDIR, "UTF-8");
 
@@ -473,7 +474,8 @@ datetime_properties_dialog(XfcePanelPlugin *plugin, t_datetime * datetime)
   gtk_size_group_add_widget(sg, label);
 
   /* color button */
-  button = gtk_color_button_new();
+  gdk_color_parse(datetime->date_color, &color);
+  button = gtk_color_button_new_with_color(&color);
   gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 0);
   g_signal_connect(G_OBJECT(button), "color-set",
       G_CALLBACK(date_color_changed), datetime);
@@ -590,7 +592,8 @@ datetime_properties_dialog(XfcePanelPlugin *plugin, t_datetime * datetime)
   gtk_size_group_add_widget(sg, label);
 
   /* color button */
-  button = gtk_color_button_new();
+  gdk_color_parse(datetime->time_color, &color);
+  button = gtk_color_button_new_with_color(&color);
   gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 0);
   g_signal_connect(G_OBJECT(button), "color-set",
       G_CALLBACK(time_color_changed), datetime);
