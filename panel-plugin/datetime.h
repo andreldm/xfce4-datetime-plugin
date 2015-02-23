@@ -50,12 +50,13 @@ typedef struct {
   gulong tooltip_handler_id;
 
   /* settings */
-  gchar *date_font;
-  gchar *time_font;
-  gchar *date_format;
-  gchar *time_format;
-  gchar *date_color;
-  gchar *time_color;
+  gchar    *date_font;
+  gchar    *time_font;
+  gchar    *date_format;
+  gchar    *time_format;
+  gchar    *date_color;
+  gchar    *time_color;
+  gboolean side_by_side;
   t_layout layout;
 
   /* option widgets */
@@ -71,6 +72,7 @@ typedef struct {
   GtkWidget *time_font_selector;
   GtkWidget *time_format_combobox;
   GtkWidget *time_format_entry;
+  GtkWidget *side_by_side_checkbutton;
 
   /* popup calendar */
   GtkWidget *cal;
@@ -98,6 +100,11 @@ void
 datetime_apply_color(t_datetime *datetime,
     const gchar *date_color,
     const gchar *time_color);
+
+void
+datetime_apply_side_by_side(t_datetime *datetime,
+    const gboolean side_by_side,
+    const gboolean update_layout);
 
 void
 datetime_apply_layout(t_datetime *datetime,

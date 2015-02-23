@@ -173,6 +173,8 @@ datetime_layout_changed(GtkComboBox *cbox, t_datetime *dt)
   switch(layout)
   {
     case LAYOUT_DATE:
+      gtk_widget_set_sensitive(dt->side_by_side_checkbutton, FALSE);
+
       gtk_widget_show(dt->date_font_hbox);
       gtk_widget_hide(dt->date_tooltip_label);
 
@@ -181,6 +183,8 @@ datetime_layout_changed(GtkComboBox *cbox, t_datetime *dt)
       break;
 
     case LAYOUT_TIME:
+      gtk_widget_set_sensitive(dt->side_by_side_checkbutton, FALSE);
+
       gtk_widget_hide(dt->date_font_hbox);
       gtk_widget_show(dt->date_tooltip_label);
 
@@ -188,7 +192,9 @@ datetime_layout_changed(GtkComboBox *cbox, t_datetime *dt)
       gtk_widget_hide(dt->time_tooltip_label);
       break;
 
-    default:
+    default: /* both */
+      gtk_widget_set_sensitive(dt->side_by_side_checkbutton, TRUE);
+      
       gtk_widget_show(dt->date_font_hbox);
       gtk_widget_hide(dt->date_tooltip_label);
 
@@ -296,6 +302,17 @@ time_color_changed(GtkWidget *widget, t_datetime *dt)
   gtk_color_button_get_color((GtkColorButton *)widget, &color);
 
   datetime_apply_color(dt, NULL, gdk_color_to_string(&color));
+}
+
+/*
+ * Check if side-by-side is checked and set the layout according to it
+ */
+static void
+side_by_side_changed(GtkWidget *widget, t_datetime *dt)
+{
+  gboolean side_by_side = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON(widget));
+
+  datetime_apply_side_by_side(dt, side_by_side, TRUE);
 }
 
 /*
@@ -418,6 +435,17 @@ datetime_properties_dialog(XfcePanelPlugin *plugin, t_datetime * datetime)
   gtk_combo_box_set_active(GTK_COMBO_BOX(layout_combobox), datetime->layout);
   g_signal_connect(G_OBJECT(layout_combobox), "changed",
       G_CALLBACK(datetime_layout_changed), datetime);
+
+  /* hbox */
+  hbox = gtk_hbox_new(FALSE, 2);
+  gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
+
+  /* Side by side check button */
+  datetime->side_by_side_checkbutton = gtk_check_button_new_with_label(_("Side by side"));
+  gtk_box_pack_start(GTK_BOX(hbox), datetime->side_by_side_checkbutton, FALSE, FALSE, 0);
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON (datetime->side_by_side_checkbutton), datetime->side_by_side);
+  g_signal_connect(G_OBJECT(datetime->side_by_side_checkbutton), "toggled",
+      G_CALLBACK(side_by_side_changed), datetime);
 
   /* show frame */
   gtk_widget_show_all(frame);

@@ -45,6 +45,13 @@
 #endif
 #endif
 
+#ifdef HAS_PANEL_49
+static void datetime_set_mode(XfcePanelPlugin *plugin, XfcePanelPluginMode mode, t_datetime *datetime);
+#else
+static void datetime_set_orientation(XfcePanelPlugin *plugin, GtkOrientation orientation, t_datetime *datetime);
+{
+#endif
+
 /**
  *  Convert a GTimeVal to milliseconds.
  *  Fractions of a millisecond are truncated.
@@ -444,6 +451,9 @@ void datetime_apply_layout(t_datetime *datetime, t_layout layout)
       gtk_widget_set_has_tooltip(GTK_WIDGET(datetime->button), FALSE);
   }
 
+  /* set labels to occupy the same size or not */
+  gtk_box_set_homogeneous(GTK_BOX(datetime->box), !datetime->side_by_side);
+
   /* set order based on layout-selection */
   switch(datetime->layout)
   {
@@ -536,6 +546,30 @@ void datetime_apply_color(t_datetime *datetime,
 }
 
 /*
+ * set the layout according to side-by-side value
+ */
+void datetime_apply_side_by_side(t_datetime *datetime,
+    const gboolean side_by_side,
+    const gboolean update_layout)
+{
+  GtkOrientation orientation;
+
+  datetime->side_by_side = side_by_side;
+
+  /* update orientation */
+  orientation = xfce_panel_plugin_get_orientation(datetime->plugin);
+
+#ifdef HAS_PANEL_49
+  datetime_set_mode(datetime->plugin, orientation, datetime);
+#else
+  datetime_set_orientation(datetime->plugin, orientation, datetime);
+#endif
+
+  if(update_layout)
+    datetime_apply_layout(datetime, datetime->layout);
+}
+
+/*
  * Function only called by the signal handler.
  */
 static int datetime_set_size(XfcePanelPlugin *plugin,
@@ -555,6 +589,7 @@ static void datetime_read_rc_file(XfcePanelPlugin *plugin, t_datetime *dt)
   XfceRc *rc = NULL;
   t_layout layout;
   const gchar *date_font, *time_font, *date_format, *time_format, *date_color, *time_color;
+  const gboolean *side_by_side;
 
   /* load defaults */
   layout = LAYOUT_DATE_TIME;
@@ -564,6 +599,7 @@ static void datetime_read_rc_file(XfcePanelPlugin *plugin, t_datetime *dt)
   time_format = "%H:%M";
   date_color = "#000000000000";
   time_color = "#000000000000";
+  side_by_side = FALSE;
 
   /* open file */
   if((file = xfce_panel_plugin_lookup_rc_file(plugin)) != NULL)
@@ -573,13 +609,14 @@ static void datetime_read_rc_file(XfcePanelPlugin *plugin, t_datetime *dt)
 
     if(rc != NULL)
     {
-      layout      = xfce_rc_read_int_entry(rc, "layout", layout);
-      date_font   = xfce_rc_read_entry(rc, "date_font", date_font);
-      time_font   = xfce_rc_read_entry(rc, "time_font", time_font);
-      date_format = xfce_rc_read_entry(rc, "date_format", date_format);
-      time_format = xfce_rc_read_entry(rc, "time_format", time_format);
-      date_color = xfce_rc_read_entry(rc, "date_color", date_color);
-      time_color = xfce_rc_read_entry(rc, "time_color", time_color);
+      layout       = xfce_rc_read_int_entry(rc, "layout", layout);
+      date_font    = xfce_rc_read_entry(rc, "date_font", date_font);
+      time_font    = xfce_rc_read_entry(rc, "time_font", time_font);
+      date_format  = xfce_rc_read_entry(rc, "date_format", date_format);
+      time_format  = xfce_rc_read_entry(rc, "time_format", time_format);
+      date_color   = xfce_rc_read_entry(rc, "date_color", date_color);
+      time_color   = xfce_rc_read_entry(rc, "time_color", time_color);
+      side_by_side = xfce_rc_read_bool_entry(rc, "side_by_side", side_by_side);
     }
   }
 
@@ -587,13 +624,14 @@ static void datetime_read_rc_file(XfcePanelPlugin *plugin, t_datetime *dt)
   time_font   = g_strdup(time_font);
   date_format = g_strdup(date_format);
   time_format = g_strdup(time_format);
-  date_color = g_strdup(date_color);
-  time_color = g_strdup(time_color);
+  date_color  = g_strdup(date_color);
+  time_color  = g_strdup(time_color);
 
   if(rc != NULL)
     xfce_rc_close(rc);
 
   /* set values in dt struct */
+  datetime_apply_side_by_side(dt, side_by_side, FALSE);
   datetime_apply_layout(dt, layout);
   datetime_apply_font(dt, date_font, time_font);
   datetime_apply_format(dt, date_format, time_format);
@@ -623,6 +661,7 @@ void datetime_write_rc_file(XfcePanelPlugin *plugin, t_datetime *dt)
     xfce_rc_write_entry(rc, "time_format", dt->time_format);
     xfce_rc_write_entry(rc, "date_color", dt->date_color);
     xfce_rc_write_entry(rc, "time_color", dt->time_color);
+    xfce_rc_write_bool_entry(rc, "side_by_side", dt->side_by_side);
 
     xfce_rc_close(rc);
   }
@@ -642,6 +681,9 @@ static void datetime_set_mode(XfcePanelPlugin *plugin, XfcePanelPluginMode mode,
 static void datetime_set_orientation(XfcePanelPlugin *plugin, GtkOrientation orientation, t_datetime *datetime)
 {
 #endif
+
+  gboolean side_by_side = TRUE;
+
   if (orientation == GTK_ORIENTATION_VERTICAL)
   {
     xfce_hvbox_set_orientation(XFCE_HVBOX(datetime->box), GTK_ORIENTATION_HORIZONTAL);
@@ -652,7 +694,8 @@ static void datetime_set_orientation(XfcePanelPlugin *plugin, GtkOrientation ori
   }
   else
   {
-    xfce_hvbox_set_orientation(XFCE_HVBOX(datetime->box), GTK_ORIENTATION_VERTICAL);
+    xfce_hvbox_set_orientation(XFCE_HVBOX(datetime->box), datetime->side_by_side ?
+      GTK_ORIENTATION_HORIZONTAL : GTK_ORIENTATION_VERTICAL);
     gtk_label_set_angle(GTK_LABEL(datetime->time_label), 0);
     gtk_label_set_angle(GTK_LABEL(datetime->date_label), 0);
     gtk_box_reorder_child(GTK_BOX(datetime->box), datetime->date_label, 0);
